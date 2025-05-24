@@ -1396,10 +1396,10 @@ test_call_get = {
 
 
 async def selected_vllm_info(selected_radio):
-    global res_vllms
+
     global GLOBAL_VLLMS
     print(f'~~~~~~ [selected_vllm_info] REDIS_DB_VLLM: {REDIS_DB_VLLM}')
-    print(f'~~~~~~ [selected_vllm_info] res_vllms: {res_vllms}')
+
     print(f'~~~~~~ [selected_vllm_info] GLOBAL_VLLMS: {GLOBAL_VLLMS}')
     print(f'~~~~~~ [selected_vllm_info] got selected_radio: {selected_radio}')
     

@@ -89,60 +89,6 @@ error_vllm = {
 
 
 
-def redis_api(*req_component,**req_dict):
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] %%%%%%%%%%%% [redis] START')
-    global res_vllms
-    # put in default later
-    error_vllm = {
-        "container_name": "error",
-        "uid": "0000000000",
-        "status": "offline",
-        "State": {
-            "Status": "offline"
-        },
-        "gpu": {
-            "mem": "nuh uh%"
-        },
-        "ts": "0"
-    }
-    try:
-        global REDIS_API_URL
-        
-        if not req_dict:
-            print(f' %%%%%%%%%%%% [redis_api]: Error: no req_dict')
-            return [error_vllm]
-        else:
-            print(f' %%%%%%%%%%%% [redis_api]: req_dict: {req_dict}')
-            print(f' %%%%%%%%%%%% [redis_api]: req_dict["req_dict"]: {req_dict["req_dict"]}')
-            print(f' %%%%%%%%%%%% [redis_api]: req_dict["req_dict"]["method"]: {req_dict["req_dict"]["method"]}')
-        
-        print(f' %%%%%%%%%%%% [redis_api]: req_component: {req_component}')
-        
-        if not req_dict["req_dict"]["method"]:
-            print(f' %%%%%%%%%%%% [redis_api]: Error: no method')
-            return [error_vllm]
-        
-        
-        print(f' %%%%%%%%%%%% [redis_api]: VOR REQUESTINNG')
-        
-        if req_dict["req_dict"]["method"] == "test":
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] %%%%%%%%%%%% [redis] ["method"] == "test"')
-            
-            response = requests.post(REDIS_API_URL, json={"method":req_dict["req_dict"]["method"]})
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] %%%%%%%%%%%% [redis] response: {response}')
-            
-            res_json = response.json()
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] %%%%%%%%%%%% [redis] res_json: {res_json}')
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] %%%%%%%%%%%% [redis] res_json["result_status"]: {res_json["result_status"]}')
-            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] %%%%%%%%%%%% [redis] res_json["result_data"]: {res_json["result_data"]}')
-
-            return res_json["result_data"]
-        
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [redis_api] {e}')
-        return [error_vllm]
-
-
 
 
 
@@ -152,26 +98,9 @@ print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ querying ...')
 res_backend = wait_for_backend(backend_url)
 print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ true or no?  res_backend: {res_backend}')
 
-res_vllms = []
+
 if wait_for_backend(backend_url):
     print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ ok is true... trying to get vllms ...')
-
-    req_test = {
-        "method": "test"
-    }
-
-    
-    print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ 1')
-    res_vllms = redis_api("test", req_dict=req_test)
-    print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ 2')
-    print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ OK GOT res_vllms: {res_vllms}')
-    print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ OK GOT res_vllms[0]: {res_vllms[0]}')
-    print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ OK GOT res_vllms[1]: {res_vllms[1]}')
-
-    print(f' ~~~~~~~~~~~~~~~~~~~~~~~~ 3')
-
-
-
 else:    
     print(f' ~~~~~~~~~~~ ERRROR ~~~~~~~~~~~~~ 4 responded False')
 
@@ -1414,193 +1343,6 @@ def network_to_pd():
 
 
 
-
-
-
-
-
-
-
-async def redis_connection(**kwargs):
-    try:
-        if not kwargs:
-            print(f' **REDIS: Error: no kwargs')
-            return False
-            
-        if not kwargs["db_name"]:
-            print(f' **REDIS: Error: no db_name')
-            return False
-            
-        if not kwargs["method"]:
-            print(f' **REDIS: Error: no method')
-            return False
-            
-        if not kwargs["select"]:
-            print(f' **REDIS: Error: no select')
-            return False
-
-        res_db_list = await r.lrange(kwargs["db_name"], 0, -1)
-        res_db_list = [json.loads(entry) for entry in res_db_list]
-        
-        if kwargs["select"] == "filter":
-            if not kwargs["filter_key"]:
-                print(f' **REDIS: Error: no filter_key')
-                return False
-            
-            if not kwargs["filter_val"]:
-                print(f' **REDIS: Error: no filter_val')
-                return False
-
-            res_db_list = [entry for entry in res_db_list if entry[kwargs["filter_key"]] == kwargs["filter_val"]]
-        
-        if kwargs["method"] == "get":
-            return res_db_list
-            
-        if kwargs["method"] == "del_all":
-            if len(res_db_list) > 0:
-                update_i = 0
-                for entry in [json.dumps(entry) for entry in res_db_list]:
-                    await r.lrem(kwargs["db_name"], 0, entry)
-                    update_i = update_i + 1
-                return res_db_list
-            else:
-                print(f' **REDIS: Error: no entry to delete for db_name: {kwargs["db_name"]}')
-                return False
-            
-        if kwargs["method"] == "update":
-            if len(res_db_list) > 0:
-                update_i = 0
-                for entry in [json.dumps(entry) for entry in res_db_list]:
-                    await r.lrem(kwargs["db_name"], 0, entry)
-                    entry = json.loads(entry)
-                    entry["gpu"]["mem"] = f'blablabla + {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-                    await r.rpush(kwargs["db_name"], json.dumps(entry))
-                    update_i = update_i + 1
-                return res_db_list
-            else:
-                print(f' **REDIS: Error: no entry to update for db_name: {kwargs["db_name"]}')
-                return False
-        
-        if kwargs["method"] == "save":
-            if not kwargs["data"]:
-                print(f' **REDIS: Error: no data to save')
-                return False
-            if not kwargs["data"]["uid"]:
-                print(f' **REDIS: Error: no uid')
-                return False
-                
-            curr_uids = [entry["uid"] for entry in res_db_list]
-
-            if kwargs["data"]["uid"] in curr_uids:
-                print(f' **REDIS: Error: vllm already saved!')
-                return False
-
-            save_data = kwargs["data"]
-            data_obj = {
-                "container_name": save_data.get("container_name", "err_container_name"),
-                "uid": save_data.get("uid", "00000000000"),
-                "State": {
-                    "Status": "running"
-                },
-                "gpu": {
-                    "mem": save_data.get("gpu", {}).get("mem", "err_gpu_mem")
-                },
-                "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }        
-            await r.rpush(kwargs["db_name"], json.dumps(data_obj))
-            return res_db_list
-        
-        return False
-    
-    except Exception as e:
-        print(f' **REDIS: Error: {e}')
-        return False
-
-test_call_delete_all = {
-    "db_name": REDIS_DB_VLLM,
-    "method": "del_all",
-    "select": "all"
-}
-
-def fake_redis_api(*req_component,**req_dict):
-    fake_docker_container_list_vllm_running = [
-        {
-            "Name": "vllm1",
-            "Id": "1234567890abcdef",
-            "State": {
-                "Status": "running"
-            }
-        },
-        {
-            "Name": "vllm2",
-            "Id": "abcdef1234567890",
-            "State": {
-                "Status": "running"
-            }
-        }
-    ]
-    res_vllms = []
-    for container in fake_docker_container_list_vllm_running:
-        current_vllm = {
-            "container_name": container["Name"],
-            "uid": container["Id"][:12],
-            "status": "running",
-            "State": {
-                "Status": "running"
-            },
-            "gpu": {
-                "mem": "ok%"
-            },
-            "ts": "0"
-        }
-        res_vllms.append(current_vllm)
-    return res_vllms
-
-res_vllms = []
-req_test = {
-    "method": "test"
-}
-res_vllms = fake_redis_api("test", req_dict=req_test)
-
-async def start_shit():
-    print(f'__________________________________ delete ___________________________________')
-    res_1 = await redis_connection(**test_call_delete_all)
-    print(f'________________________________________________________________________')
-    print(f'')
-
-    test_call_save_vllm1 = {
-        "db_name": REDIS_DB_VLLM,
-        "method": "save",
-        "select": "all",
-        "data": res_vllms[0]
-    }
-
-    test_call_save_vllm2 = {
-        "db_name": REDIS_DB_VLLM,
-        "method": "save",
-        "select": "all",
-        "data": res_vllms[1]
-    }
-
-    test_call_save_vllm3 = {
-        "db_name": REDIS_DB_VLLM,
-        "method": "save",
-        "select": "all",
-        "data": res_vllms[0]
-    }
-    
-    print(f'__________________________________ save ___________________________________')
-    print(f'______ calling mit res_vllms[0]: {res_vllms[0]}')
-    res_1 = await redis_connection(**test_call_save_vllm1)
-    print(f'______ calling mit res_vllms[1]: {res_vllms[1]}')
-    res_1 = await redis_connection(**test_call_save_vllm2)
-    print(f'______ calling mit res_vllms[0]: {res_vllms[0]}')
-    res_1 = await redis_connection(**test_call_save_vllm3)
-    print(f'________________________________________________________________________')
-    print(f'')
-
-    return f'started'
-
 async def nur_update(**kwargs):
     try:
         # print(f' **nur_update: kwargs["db_name"] {kwargs["db_name"]}')
@@ -1791,20 +1533,6 @@ def toggle_test_vllms_create(vllm_list):
     )
 
 
-
-
-
-
-def get_test_vllms():
-    try:
-        global test_vllms
-        test_vllms = redis_connection(**test_call_get)
-        # print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllms] GET! test_vllms: {test_vllms}')
-        return test_vllms
-    
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllms] {e}')
-        return f'err {str(e)}'
 
 
 
@@ -2205,42 +1933,6 @@ def parallel_download(selected_model_size, model_dropdown):
 def change_tab(n):
     return gr.Tabs(selected=n)
 
-def toggle_test_vllms(req_id):
-    try:
-        global test_vllms
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_test_vllms_radio] req_id: {req_id}')
-        
-        test_call_get_filter2 = {
-            "db_name": "asd",
-            "method": "get",
-            "select": "filter",
-            "filter_key": "id",
-            "filter_val": req_id,
-        }
-        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        
-        test_vllms = redis_connection(**test_call_get_filter2)
-        
-        # Add proper error handling for the redis response
-        if test_vllms is False:
-            return "Redis operation failed"
-
-            
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_test_vllms_radio] test_vllms: {test_vllms}')
-
-        
-        print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_test_vllms_radio] test_vllms[0]: {test_vllms[0]}')
-        print("ccccccccccccccccccccccccccccccccccccccc")
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_test_vllms_radio] test_vllms[0]["id"]: {test_vllms[0]["id"]}')
-        print("ddddddddddddddddddddd")
-        
-        return test_vllms[0]["id"],f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-    
-    except Exception as e:
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllms] {e}')
-        return f'err {str(e)}'
-
 
 
 
@@ -2519,15 +2211,6 @@ def create_app():
         vllm_state = gr.State([])
         container_state = gr.State(value=[])
         
-        async def start_shiii():
-            try:
-                res_start = await start_shit()
-                if res_start != "started":
-                    return "not started"
-                return res_start
-            except Exception as e:
-                print(f'[start_shiii] Error {e}')
-                return "not started"
                 
         async def get_vllm():
             try:
@@ -2551,7 +2234,6 @@ def create_app():
                 return []
         
         app.load(get_vllm, outputs=[vllm_state])
-        app.load(start_shiii, outputs=start_box)
         app.load(get_container, outputs=[container_state])
         
         txt_lambda_log_helper = gr.Textbox(value="logs", visible=False)
@@ -3198,16 +2880,7 @@ def create_app():
         )
 
         
-        
-        
-        # aaaa label info evtl oder info
-        test_vllms_radio.change(
-            toggle_test_vllms,
-            test_vllms_radio,
-            [test_vllms_radio,test_vllm_radio_out] #choices und ts
-        )
-
-                
+                        
 
 
         vllm_timer = gr.Timer(1,active=True)
@@ -3241,28 +2914,15 @@ def create_app():
 
 # Launch the app
 if __name__ == "__main__":
-    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [start] starting frontend ...')
-    logging.info(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [start] starting frontend ...')
+    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ START GRADIO ...')
     
     backend_url = f'http://container_backend:{os.getenv("BACKEND_PORT")}/docker'
     
     # Wait for the backend container to be online
+    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ STARTT WAITING FOR DOCKER ...')
     if wait_for_backend(backend_url):
                 
-        print(f' @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OK CALLING BACKEND TO GET VLLMS')
-        req_test = {
-            "method": "test"
-        }
-
-        
-        print(f' !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 1')
-        res_vllms = redis_api("test", req_dict=req_test)
-        print(f' !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2')
-        print(f' @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OK GOT res_vllms: {res_vllms}')
-        print(f' @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OK GOT res_vllms[0]: {res_vllms[0]}')
-        print(f' @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OK GOT res_vllms[1]: {res_vllms[1]}')
-
-        print(f' !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 3')
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] @@@@ START DOCKER OK!')
 
         app = create_app()
         app.launch(server_name=f'{os.getenv("FRONTEND_IP")}', server_port=int(os.getenv("FRONTEND_PORT")))

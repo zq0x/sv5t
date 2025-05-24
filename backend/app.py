@@ -389,10 +389,43 @@ def get_gpu_info():
 async def update_vllm():
     while True:
         try:
-            data_vllm = get_vllm_info()
-            pipe.set('vllm_key', json.dumps(data_vllm))
-            await pipe.execute()
+            # data_vllm = get_vllm_info()
+            
+            print(f'????????????????????? get_vllm_info START')
             res_vllm = await r.get('vllm_key')
+            vllm_data_json = json.loads(res_vllm) if res_vllm else None
+            print(f'????????????????????? get_vllm_info vllm_data_json: {vllm_data_json}')
+            try:
+                global GPU_LIST
+                print(f'????????????????????? GPU_LIST: {GPU_LIST}')
+                print(f'????????????????????? GPU_LIST[0]["mem"]: {GPU_LIST[0]["mem"]}')
+                vllm_info = []
+                res_container_list = client.containers.list(all=True)
+                res_container_list_attrs = [container.attrs for container in res_container_list]
+                for c in res_container_list_attrs:
+                    # print(f'????????????????????? {c}')
+                    # print(f'????????????????????? {c["Name"]}')
+                    c_status = f'{c["State"]["Status"] if "State" in c and "Status" in c["State"] else "No status"}'
+                    # print(f'????????????????????? {c_status}')
+                    # print(f'????????????????????? {c_status}')
+                    
+                    vllm_info.append({
+                        "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
+                        "name": c.get("Name", "nadaname"),
+                        "uid": c.get("Id", "noid"),
+                        "container_name": c.get("Name", "nadacontainername"),
+                        "status": c_status,
+                        "gpu_list": [0,1],
+                        "mem": f'{GPU_LIST[0]["mem"]}',
+                        "gpu": f'{GPU_LIST[0]["gpu"]}',
+                        "temp": f'{GPU_LIST[0]["temp"]}'
+                    })
+            except Exception as e:
+                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllm_info] {e}')
+    
+            
+            pipe.set('vllm_key', json.dumps(vllm_info))
+            await pipe.execute()
             await asyncio.sleep(0.1)
         except Exception as e: 
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')

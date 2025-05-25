@@ -181,7 +181,6 @@ def dropdown_load_tested_models():
     current_models_data = response_models.copy()
     model_ids = [m["id"] for m in response_models]
     print(f'model_ids: {model_ids}')
-    # return gr.update(choices=model_ids, value=response_models[0]["id"], visible=True)
     return [gr.update(choices=model_ids, value=response_models[0]["id"], visible=True),gr.update(value=response_models[0]["id"],show_label=True, label=f'Loaded {len(model_ids)} models!')]
 
 
@@ -256,99 +255,10 @@ def docker_api(req_method,req_var):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def gpu_to_pd():
-#     global MEM_TOTAL
-#     global MEM_USED
-#     global MEM_FREE
-#     rows = []
-
-#     try:
-#         gpu_list = get_gpu_data()
-#         MEM_TOTAL = 0
-#         MEM_USED = 0
-#         MEM_FREE = 0
-#         for entry in gpu_list:
-#             gpu_info = ast.literal_eval(entry['gpu_info'])
-            
-#             current_gpu_mem_total = gpu_info.get("mem_total", "0")
-#             current_gpu_mem_used = gpu_info.get("mem_used", "0")
-#             current_gpu_mem_free = gpu_info.get("mem_free", "0")
-#             MEM_TOTAL = float(MEM_TOTAL) + float(current_gpu_mem_total.split()[0])
-#             MEM_USED = float(MEM_USED) + float(current_gpu_mem_used.split()[0])
-#             MEM_FREE = float(MEM_FREE) + float(current_gpu_mem_free.split()[0])
-
-            
-#             rows.append({                                
-#                 "name": gpu_info.get("name", "0"),
-#                 "mem_util": gpu_info.get("mem_util", "0"),
-#                 "timestamp": entry.get("timestamp", "0"),
-#                 "fan_speed": gpu_info.get("fan_speed", "0"),
-#                 "temperature": gpu_info.get("temperature", "0"),
-#                 "gpu_util": gpu_info.get("gpu_util", "0"),
-#                 "power_usage": gpu_info.get("power_usage", "0"),
-#                 "clock_info_graphics": gpu_info.get("clock_info_graphics", "0"),
-#                 "clock_info_mem": gpu_info.get("clock_info_mem", "0"),                
-#                 "cuda_cores": gpu_info.get("cuda_cores", "0"),
-#                 "compute_capability": gpu_info.get("compute_capability", "0"),
-#                 "current_uuid": gpu_info.get("current_uuid", "0"),
-#                 "gpu_i": entry.get("gpu_i", "0"),
-#                 "supported": gpu_info.get("supported", "0"),
-#                 "not_supported": gpu_info.get("not_supported", "0"),
-#                 "status": "ok"
-#             })
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         print(f'rows: {rows}')
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         df = pd.DataFrame(rows)
-        
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         print(f'df: {df}')
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         print(f'@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-#         return df
-    
-#     except Exception as e:
-#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-
-# gpu_to_pd()
-
 async def asdf():
-    # print(f'######### ASDF #########')
+
     res_asdf = await r.get('asdf')
-    # print(f'######### ASDF res -> {res_asdf} #########')
+
     return res_asdf
 async def gpu_to_pd2():
     global MEM_TOTAL
@@ -357,26 +267,15 @@ async def gpu_to_pd2():
     rows = []
 
     try:
-        # print(f':::::::::::::::::::::getting key:>>>>>::')
+
         gpu_data2 = await r.get('gpu_key')
-        # print(f'................................................................')
-        # print(f'.............gpu_data2..........')
-        # print(gpu_data2)
-        # print(f'................................................................')
+
         current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-        # print(f'................................................................')
-        # print(f'.............current_data2..........')
-        # print(current_data2)
-        # print(f'................................................................')
+
         for entry in current_data2:
-            # print(f'................................................................')
-            # print("entry")
-            # print(entry)
-            # print(f'................................................................')
+
             gpu_info = entry.copy()
-            # print("gpu_info")
-            # print(gpu_info)
-            # print(f'................................................................')
+
             current_gpu_mem_total = gpu_info.get("mem_total", "0")
             current_gpu_mem_used = gpu_info.get("mem_used", "0")
             current_gpu_mem_free = gpu_info.get("mem_free", "0")
@@ -405,18 +304,9 @@ async def gpu_to_pd2():
                 "not_supported": gpu_info.get("not_supported", "0"),
                 "status": "ok"
             })
-        # print(f'@@@@2222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'rows: {rows}')
-        # print(f'@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+
         df = pd.DataFrame(rows)
-        
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'df: {df}')
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+
         return df
         
         
@@ -424,47 +314,6 @@ async def gpu_to_pd2():
     except Exception as e:
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
         return f'error: {e}'
-
-gpu_to_pd2()
-
-
-
-
-
-
-
-
-
-# def disk_to_pd():
-#     rows = []
-#     try:
-#         disk_list = get_disk_data()
-#         for entry in disk_list:
-#             disk_info = ast.literal_eval(entry['disk_info'])
-#             rows.append({                
-#                 "disk_i": entry.get("disk_i", "0"),
-#                 "timestamp": entry.get("timestamp", "0"),
-#                 "device": disk_info.get("device", "0"),
-#                 "usage_percent": disk_info.get("usage_percent", "0"),
-#                 "mountpoint": disk_info.get("mountpoint", "0"),
-#                 "fstype": disk_info.get("fstype", "0"),
-#                 "opts": disk_info.get("opts", "0"),
-#                 "usage_total": disk_info.get("usage_total", "0"),
-#                 "usage_used": disk_info.get("usage_used", "0"),
-#                 "usage_free": disk_info.get("usage_free", "0"),                
-#                 "io_read_count": disk_info.get("io_read_count", "0"),
-#                 "io_write_count": disk_info.get("io_write_count", "0")                
-#             })
-#         df = pd.DataFrame(rows)
-#         return df
-    
-#     except Exception as e:
-#         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
-#         logging.info(f' &&&&&& [ERROR] [disk_to_pd] GOT e {e}')
-
-# disk_to_pd()
-
-
 
 
 
@@ -475,26 +324,15 @@ async def gpu_to_pd2():
     rows = []
 
     try:
-        # print(f':::::::::::::::::::::getting key::::::::::::::::')
+
         gpu_data2 = await r.get('gpu_key')
-        # print(f'................................................................')
-        # print(f'.............gpu_data2..........')
-        # print(gpu_data2)
-        # print(f'................................................................')
+
         current_data2 = json.loads(gpu_data2) if gpu_data2 else None
-        # print(f'................................................................')
-        # print(f'.............current_data2..........')
-        # print(current_data2)
-        # print(f'................................................................')
+
         for entry in current_data2:
-            # print(f'................................................................')
-            # print("entry")
-            # print(entry)
-            # print(f'................................................................')
+
             gpu_info = entry.copy()
-            # print("gpu_info")
-            # print(gpu_info)
-            # print(f'................................................................')
+
             current_gpu_mem_total = gpu_info.get("mem_total", "0")
             current_gpu_mem_used = gpu_info.get("mem_used", "0")
             current_gpu_mem_free = gpu_info.get("mem_free", "0")
@@ -523,18 +361,9 @@ async def gpu_to_pd2():
                 "not_supported": gpu_info.get("not_supported", "0"),
                 "status": "ok"
             })
-        # print(f'@@@@2222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'rows: {rows}')
-        # print(f'@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+
         df = pd.DataFrame(rows)
-        
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'df: {df}')
-        # print(f'@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        # print(f'@@@@@@222@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+
         return df
         
         
@@ -543,9 +372,6 @@ async def gpu_to_pd2():
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
         return f'error: {e}'
 
-gpu_to_pd2()
-
-
 
 
 async def disk_to_pd2():
@@ -553,29 +379,12 @@ async def disk_to_pd2():
     rows = []
 
     try:
-        # print(f'>>>>>::::::::getting key::::::::::::::::')
         disk_data = await r.get('disk_key')
-        # print(f'...>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-        # print(f'.>>>>>>>>>>>>>..disk_data.>>>>>>')
-        # print(disk_data)
-        # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-        disk_data_json = json.loads(disk_data) if disk_data else None
-        # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-        # print(f'>>>>>>....disk_data_json>>>>>>.')
-        # print(disk_data_json)
-        # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-        for entry in disk_data_json:
-            # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-            # print("entry")
-            # print(entry)
-            # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-            # disk_info = entry.copy()
-            # print("disk_info")
-            # print(disk_info)
-            # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
 
-            
-            
+        disk_data_json = json.loads(disk_data) if disk_data else None
+
+        for entry in disk_data_json:
+
             rows.append({
                 "ts": entry.get("ts", "0"),
                 "disk_i": entry.get("disk_i", "0"),
@@ -591,18 +400,7 @@ async def disk_to_pd2():
                 "io_read_count": entry.get("io_read_count", "0"),
                 "io_write_count": entry.get("io_write_count", "0")                
             })
-        # print(f'>>>>>2222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
-        # print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
-        # print(f'rows: {rows}')
-        # print(f'>>>>>@@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@@')
-        # print(f'>>>>>>>>>>222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@@')
         df = pd.DataFrame(rows)
-        
-        # print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
-        # print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        # print(f'df: {df}')
-        # print(f'>>>>>@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@')
-        # print(f'>>>>>@@222>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         return df
         
         
@@ -615,39 +413,16 @@ async def disk_to_pd2():
 
 
 
-disk_to_pd2()
-
-
-
-
-
 async def vllm_to_pd2():
 
     global GLOBAL_VLLMS
     rows = []
 
     try:
-        # print(f'??????::::::::getting key::::::::::::::::')
-        vllm_data = await r.get('vllm_key')
-        # print(f'...????????????????????????????????????????????????????????????>>.')
-        # print(f'.????????????>>>..vllm_data.??????>')
-        # print(vllm_data)
-        # print(f'????????????????????????????????????????????????>>.')
-        vllm_data_json = json.loads(vllm_data) if vllm_data else None
-        # print(f'????????????????????????????????????????????????>>.')
-        # print(f'??????>....disk_data_json??????>.')
-        # print(vllm_data_json)
-        # print(f'????????????????????????????????????????????????>>.')
-        for entry in vllm_data_json:
-            # print(f'????????????????????????????????????????????????>>.')
-            # print("entry")
-            # print(entry)
-            # print(f'????????????????????????????????????????????????>>.')
-            # disk_info = entry.copy()
-            # print("disk_info")
-            # print(disk_info)
-            # print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
 
+        vllm_data = await r.get('vllm_key')
+        vllm_data_json = json.loads(vllm_data) if vllm_data else None
+        for entry in vllm_data_json:
 
             rows.append({
                 "ts": entry.get("ts", "0"),
@@ -660,21 +435,9 @@ async def vllm_to_pd2():
                 "gpu": entry.get("gpu", "0"),
                 "temp": entry.get("temp", "0")
             })
-        # print(f'?????2222????????????????????????????????????????@@')
-        # print(f'?????@222????????????????????????????????????????@')
-        # print(f'rows: {rows}')
-        # print(f'?????@@@222???????????????????????????????????@@@')
-        # print(f'??????????222???????????????????????????????????@@')
         df = pd.DataFrame(rows)
         rows_copy = rows.copy()
-        # print(f' %%%%%%%%%%%%%% ADDING TO GLOBAL_VLLMS: rows_copy: {rows_copy}')
         GLOBAL_VLLMS = rows_copy
-        # print(f' %%%%%%%%%%%%%% ADDED! NOW GLOBAL_VLLMS: {GLOBAL_VLLMS}')
-        # print(f'?????@222????????????????????????????????????????@')
-        # print(f'?????@222????????????????????????????????????????')
-        # print(f'df: {df}')
-        # print(f'?????@222????????????????????????????????????????@')
-        # print(f'?????@@222???????????????????????????????????>>>>>')
         return df
         
         
@@ -686,13 +449,37 @@ async def vllm_to_pd2():
 
 
 
-# vllm_to_pd2()
+GLOBAL_FISH = []
 
+async def fish_to_pd2():
 
+    global GLOBAL_FISH
+    rows = []
 
+    try:
 
+        fish_data = await r.get('fish_key')
+        fish_data_json = json.loads(fish_data) if fish_data else None
+        for entry in fish_data_json:
 
-
+            rows.append({
+                "ts": entry.get("ts", "0"),
+                "name": entry.get("name", "0"),
+                "container_name": entry.get("container_name", "0"),
+                "uid": entry.get("uid", "0"),
+                "status": entry.get("status", "0"),
+                "mem": entry.get("mem", "0")
+            })
+        df = pd.DataFrame(rows)
+        rows_copy = rows.copy()
+        GLOBAL_FISH = rows_copy
+        return df
+        
+        
+    
+    except Exception as e:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] {e}')
+        return f'error: {e}'
 
 
 
@@ -1969,6 +1756,10 @@ def create_app():
                 vllm_dataframe = gr.Dataframe()
 
 
+            with gr.Accordion(("fish information"), open=False) as acc_fish_dataframe:
+                fish_dataframe = gr.Dataframe()
+
+
 
         
         test_vllm_radio_out = gr.Textbox(label="test_vllm_radio_out")
@@ -2885,6 +2676,10 @@ def create_app():
 
         vllm_timer = gr.Timer(1,active=True)
         vllm_timer.tick(vllm_to_pd2, outputs=vllm_dataframe)
+
+
+        fish_timer = gr.Timer(1,active=True)
+        fish_timer.tick(fish_to_pd2, outputs=fish_dataframe)
 
 
         disk_timer = gr.Timer(1,active=True)

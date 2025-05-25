@@ -389,9 +389,6 @@ def get_gpu_info():
 async def update_vllm():
     while True:
         try:
-            # data_vllm = get_vllm_info()
-            
-            print(f'????????????????????? get_vllm_info START')
             res_vllm = await r.get('vllm_key')
             vllm_data_json = json.loads(res_vllm) if res_vllm else None
             print(f'????????????????????? get_vllm_info vllm_data_json: {vllm_data_json}')
@@ -436,65 +433,136 @@ async def update_vllm():
 async def update_disk():
     while True:
         try:
-            # print(f'==================!!!!!! updating ==================')
             data_disk = get_disk_info()
-            # print(f'==================!!!!!! data_disk: {data_disk} ==================')
             pipe.set('disk_key', json.dumps(data_disk))
             await pipe.execute()
-            # print(f'==================!!!!!! done ==================')
-            # print(f'==================!!!!!! getting ==================')
             res_disk = await r.get('disk_key')
-            # print(f'==================!!!!!! res_disk ==================')
-            # print(f'==================!!!!!! {res_disk} ==================')
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
         except Exception as e: 
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
 
 # cccc
 async def update_gpu():
     while True:
         try:
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! updating !!!!!!!!!!!!!!!!!!!!!')
             data_gpu = get_gpu_info()
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu: {data_gpu} !!!!!!!!!!!!!!!!!!!!!')
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! data_gpu[0]["mem_util"]: {data_gpu[0]["mem_util"]} !!!!!!!!!!!!!!!!!!!!!')
             res_gpu_arr = []
             curr_gpu_i = 0
             for a_gpu in data_gpu:
-                # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! a_gpu: {a_gpu} !!!!!!!!!!!!!!!!!!!!!')
-                # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
                 current_gpu_obj = {
                     f'id': f'{curr_gpu_i}',
                     f'{a_gpu["current_uuid"]}': f'{a_gpu["mem_util"]}',
                     f'ts': f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
                 }
                 res_gpu_arr.append(current_gpu_obj)
-                # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! added: {curr_gpu_i} !!!!!!!!!!!!!!!!!!!!!')
                 curr_gpu_i = curr_gpu_i + 1
                 
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! finished! responding with {len(res_gpu_arr)} gpus ... !!!!!!!!!!!!!!!!!!!!!')
             pipe.set('gpu_key', json.dumps(data_gpu))
             pipe.set('asdf', json.dumps(res_gpu_arr))
             # pipe.setex('gpu_key', 3600, json.dumps(data_gpu))
             await pipe.execute()
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! done !!!!!!!!!!!!!!!!!!!!!')
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! getting !!!!!!!!!!!!!!!!!!!!!')
             res_gpu = await r.get('gpu_key')
-            
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! res_gpu !!!!!!!!!!!!!!!!!!!!!')
-            # print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!! {res_gpu} !!!!!!!!!!!!!!!!!!!!!')
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
         except Exception as e: 
             print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
+
+
+async def update_fish():
+    while True:
+        try:
+            res_fish = await r.get('fish_key')
+            fish_data_json = json.loads(res_fish) if res_fish else None
+            print(f' >>>>>>> fish_data_json: {fish_data_json}')
+            res_container_list = client.containers.list(all=True)
+            res_container_list_attrs = [container.attrs for container in res_container_list]
+            updated_fish = []
+            for fish in fish_data_json:
+                print(f' >>>>>>> fish: {fish}')
+                print(f' >>>>>>> fish["name"]: {fish["name"]}')
+                fish_container = [c for c in res_container_list_attrs if c["Name"] == fish["name"]][0]
+                print(f' >>>>>>> fish_container: {fish_container}')
+                fish["ts"] = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}'
+                fish["status"] = fish_container["State"]["Status"]
+                fish["mem"] = f'genau'
+                updated_fish.append(fish)
+            
+            pipe.set('fish_key', json.dumps(updated_fish))
+            print(f' >>>>>>> fish updated!')
+            await asyncio.sleep(1)
+        except Exception as e: 
+            print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] Error: {e}')
+            await asyncio.sleep(1)
+
+
+async def default_vllm():
+    try:
+        global GPU_LIST
+        vllm_info = []
+        res_container_list = client.containers.list(all=True)
+        res_container_list_attrs = [container.attrs for container in res_container_list]
+        res_container_oai = [c for c in res_container_list_attrs if c["Name"]== "/container_vllm_oai"][0]
+        print(f'-> found res_container_oai: {res_container_oai}')
+        print(f'-> found res_container_oai["Name"]: {res_container_oai["Name"]}')
+        print(f'-> found res_container_oai["Id"]: {res_container_oai["Id"]}')
+        print(f'-> found res_container_oai["State"]["Status"]: {res_container_oai["State"]["Status"]}')
+        
+        res_container_xoo = [c for c in res_container_list_attrs if c["Name"]== "/container_vllm_xoo"][0]
+        print(f'-> found res_container_xoo: {res_container_xoo}')
+        print(f'-> found res_container_xoo["Name"]: {res_container_xoo["Name"]}')
+        print(f'-> found res_container_xoo["Id"]: {res_container_xoo["Id"]}')
+        print(f'-> found res_container_xoo["State"]["Status"]: {res_container_xoo["State"]["Status"]}')
+        
+        vllm_1 = {
+            "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
+            "name": res_container_oai["Name"],
+            "uid": res_container_oai["Id"],
+            "container_name": res_container_oai["Name"],
+            "status": res_container_oai["State"]["Status"],
+            "gpu_list": [0,1],
+            "mem": f'000000',
+            "gpu": f'000000',
+            "temp": f'000000'
+        }
+        
+        vllm_2 = {
+            "ts": f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")}',
+            "name": res_container_xoo["Name"],
+            "uid": res_container_xoo["Id"],
+            "container_name": res_container_xoo["Name"],
+            "status": res_container_xoo["State"]["Status"],
+            "gpu_list": [1],
+            "mem": f'000000',
+            "gpu": f'000000',
+            "temp": f'000000'
+        }
+
+        vllm_info.append(vllm_1)
+        vllm_info.append(vllm_2)
+            
+        pipe.set('fish_key', json.dumps(vllm_info))
+        await pipe.execute()
+        test_return = await r.get('fish_key')
+        return test_return
+    except Exception as e:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [get_vllm_info] {e}')
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global GPU_LIST
+    print(f'-> getting GPUs start ....')
+    res_gpus = get_gpu_info()
+    print(f'-> res_gpus: {res_gpus}')
+    print(f'-> GPU_LIST: {GPU_LIST}')
+    print(f'-> default_vllm start ....')
+    res_default = await default_vllm()
+    print(f'-> default_vllm: {res_default}')
     asyncio.create_task(update_disk())
     asyncio.create_task(update_gpu())
     asyncio.create_task(update_vllm())
+    asyncio.create_task(update_fish())
     yield
 
 app = FastAPI(lifespan=lifespan)

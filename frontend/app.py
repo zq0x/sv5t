@@ -53,6 +53,7 @@ def wait_for_backend(backend_url, timeout=300):
 
 
 GLOBAL_VLLMS = []
+GLOBAL_FISH = []
 
 test_vllms = []
 test_vllms_list_running = []
@@ -1182,15 +1183,28 @@ test_call_get = {
 
 
 
+async def selected_fish_info(selected_radio):
+
+    global GLOBAL_FISH
+
+    print(f'~~~~~~ [selected_fish_info] GLOBAL_VLLMS: {GLOBAL_FISH}')
+    print(f'~~~~~~ [selected_fish_info] got selected_radio: {selected_radio}')
+    
+    print(f'~~~~~~ searching for fish ...')
+
+    found_fish = [fish for fish in GLOBAL_FISH if fish["container_name"] == selected_radio]
+    print(f'~~~~~~ found_fish: {found_fish}')
+    return f'{found_fish}', f'{selected_radio}'
+
 async def selected_vllm_info(selected_radio):
 
     global GLOBAL_VLLMS
-    print(f'~~~~~~ [selected_vllm_info] REDIS_DB_VLLM: {REDIS_DB_VLLM}')
+    # print(f'~~~~~~ [selected_vllm_info] REDIS_DB_VLLM: {REDIS_DB_VLLM}')
 
-    print(f'~~~~~~ [selected_vllm_info] GLOBAL_VLLMS: {GLOBAL_VLLMS}')
-    print(f'~~~~~~ [selected_vllm_info] got selected_radio: {selected_radio}')
+    # print(f'~~~~~~ [selected_vllm_info] GLOBAL_VLLMS: {GLOBAL_VLLMS}')
+    # print(f'~~~~~~ [selected_vllm_info] got selected_radio: {selected_radio}')
     
-    print(f'~~~~~~ searching for vllm ...')
+    # print(f'~~~~~~ searching for vllm ...')
 
     found_vllm = [vllm for vllm in GLOBAL_VLLMS if vllm["container_name"] == selected_radio]
     print(f'~~~~~~ found_vllm: {found_vllm}')
@@ -2000,6 +2014,7 @@ def create_app():
         
         start_box = gr.Textbox(label="start box")
         vllm_state = gr.State([])
+        fish_state = gr.State([])
         container_state = gr.State(value=[])
         
                 
@@ -2014,6 +2029,18 @@ def create_app():
             except Exception as e:
                 print(f'[get_vllm] Error {e}')
                 return []
+                               
+        async def get_fish():
+            try:
+                fish_data = await r.get('fish_key')
+                fish_data_json = json.loads(fish_data) if fish_data else None
+                if not fish_data_json:
+                    return []
+                return fish_data_json                
+                
+            except Exception as e:
+                print(f'[get_fish_vllm] Error {e}')
+                return []
                 
         def get_container():
             try:
@@ -2025,6 +2052,7 @@ def create_app():
                 return []
         
         app.load(get_vllm, outputs=[vllm_state])
+        app.load(get_fish, outputs=[fish_state])
         app.load(get_container, outputs=[container_state])
         
         txt_lambda_log_helper = gr.Textbox(value="logs", visible=False)
@@ -2187,7 +2215,7 @@ def create_app():
                                             outputs=[container_state]
                                         )
 
-                with gr.Accordion(("vLLM Container"), open=False, visible=True) as acc_prompt:
+                with gr.Accordion(("vLLM Container"), open=False, visible=True) as acc_vllm:
                     with gr.Tabs() as tabs3:
                         for container in docker_container_list_vllm_running:
                             # Create unique ID for each tab
@@ -2301,6 +2329,44 @@ def create_app():
         #     show_progress=False
         # )
         
+        fish_radio = gr.State("")
+
+        @gr.render(inputs=[fish_state,fish_radio])
+        def render_fish(fish_list,fish_radio_val):
+            print(f'fish_radio_val: {fish_radio_val}')
+            
+            if not fish_list:
+                print("No vLLM instances found")
+                return
+                
+            with gr.Row():
+                for current_fish in fish_list:
+                    with gr.Row():
+
+
+                        fish_selected = gr.Radio([f'{current_fish["container_name"]}'], value=fish_radio_val, interactive=True, label=f' {current_fish["ts"]} ',info=f'{current_fish["status"]} -- ')
+
+
+                        fish_selected.change(
+                            selected_fish_info,
+                            [fish_selected],
+                            [selected_fish_uuid, radio_state]
+                        )
+        
+        with gr.Accordion(("Selected FISH Additional Information"), open=True, visible=True) as acc_fish:
+            selected_fish_uuid = gr.Textbox(label="selected_fish_uuid",value=f'nix fish')
+        
+     
+        fish_radio_timer2 = gr.Timer(10,active=True)
+        fish_radio_timer2.tick(
+            get_fish,
+            None,
+            [fish_state],
+            show_progress=False
+        )
+        
+        
+                
         radio_state = gr.State("")
         @gr.render(inputs=[vllm_state,radio_state])
         def render_vllm(vllm_list,radio_state_val):
@@ -2329,12 +2395,12 @@ def create_app():
                             [selected_vllm_uuid, radio_state]
                         )
         
-        with gr.Accordion(("Selected vLLM Additional Information"), open=True, visible=True) as acc_prompt:
+        with gr.Accordion(("Selected vLLM Additional Information"), open=True, visible=True) as acc_vllm_additional:
             selected_vllm_uuid = gr.Textbox(label="selected_vllm_uuid",value=f'nix bla')
         
         #ffffff
         vllm_radio_timer2 = gr.Timer(10,active=True)
-        vllm_radio_timer2.tick(
+        vllm_radio_timer2.tick(   
             get_vllm,
             None,
             [vllm_state],
